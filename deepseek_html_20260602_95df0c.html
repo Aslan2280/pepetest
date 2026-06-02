@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐸 Pepe Game - Casino</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1a2e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pepeJump {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0a0e1a 100%);
+            padding: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .balance-bar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .balance-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 40px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .balance-item .icon {
+            font-size: 20px;
+        }
+
+        .balance-item .value {
+            font-weight: bold;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            color: white;
+        }
+
+        .btn-game {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid #22c55e;
+            color: white;
+            padding: 16px;
+            font-size: 16px;
+        }
+
+        .btn-game:hover {
+            background: rgba(34, 197, 94, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .bet-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .chip {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22c55e;
+            border-radius: 40px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .chip:hover, .chip.active {
+            background: #22c55e;
+            transform: scale(1.05);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 40px;
+            color: white;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #22c55e;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 60px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: #22c55e;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1E293B;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 350px;
+            width: 90%;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(34, 197, 94, 0.3);
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .text-primary { color: #22c55e; }
+        
+        .flex { display: flex; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .flex-1 { flex: 1; }
+        .gap-2 { gap: 8px; }
+        .text-center { text-align: center; }
+        .w-100 { width: 100%; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-3 { margin-bottom: 12px; }
+        .mb-4 { margin-bottom: 16px; }
+        .mt-4 { margin-top: 16px; }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            z-index: 3000;
+            animation: fadeIn 0.3s;
+            white-space: pre-line;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .pepe-avatar {
+            font-size: 64px;
+            animation: pepeJump 2s infinite;
+            display: inline-block;
+        }
+
+        .credit-bar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .credit-fill {
+            background: linear-gradient(90deg, #F59E0B, #22c55e);
+            border-radius: 10px;
+            height: 100%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div style="margin-top: 16px;">Загрузка Pepe Game... 🐸</div>
+</div>
+
+<!-- Экран авторизации -->
+<div id="authScreen" style="display: none;">
+    <div class="container" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+        <div class="card" style="width: 100%;">
+            <div class="text-center mb-4">
+                <div class="pepe-avatar">🐸</div>
+                <h1 style="font-size: 28px; margin-top: 12px;">PEPE GAME</h1>
+                <p style="color: #94A3B8;">Войдите или зарегистрируйтесь</p>
+            </div>
+            
+            <form id="authForm">
+                <input type="text" id="username" class="input-field mb-3" placeholder="Username" required autocomplete="off">
+                <input type="password" id="password" class="input-field mb-3" placeholder="Пароль" required autocomplete="off">
+                <input type="text" id="fullname" class="input-field mb-3" placeholder="Ваше имя" style="display: none;" autocomplete="off">
+                
+                <div class="flex gap-2">
+                    <button type="submit" id="loginBtn" class="btn btn-primary w-100">Войти</button>
+                    <button type="button" id="showRegisterBtn" class="btn btn-secondary w-100">Регистрация</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Главный экран -->
+<div id="mainScreen" style="display: none;">
+    <div class="header">
+        <div class="balance-bar">
+            <div class="balance-item">
+                <span class="icon">🐸</span>
+                <span class="value" id="balanceCash">0</span>
+            </div>
+            <div class="balance-item">
+                <span class="icon">💳</span>
+                <span class="value" id="balanceCard">0</span>
+            </div>
+            <div class="balance-item">
+                <span class="icon" id="userStatusIcon">🐸</span>
+                <span class="value" id="userStatusName">Новичок</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tab-bar">
+            <div class="tab active" data-tab="games">🎮 Игры</div>
+            <div class="tab" data-tab="bank">🏦 Банк</div>
+            <div class="tab" data-tab="profile">👤 Профиль</div>
+        </div>
+
+        <!-- Вкладка Игры -->
+        <div id="tabGames">
+            <div class="card">
+                <h3 class="mb-3">🐸 Баланс: <span id="gameBalance" class="text-primary">0</span></h3>
+                
+                <div class="game-grid">
+                    <button type="button" class="btn btn-game" onclick="selectGame('coin')">🪙 Монетка</button>
+                    <button type="button" class="btn btn-game" onclick="selectGame('dice')">🎲 Кубик</button>
+                    <button type="button" class="btn btn-game" onclick="selectGame('slots')">🎰 Слоты</button>
+                </div>
+                
+                <div class="bet-chips" id="betChips">
+                    <div class="chip active" data-bet="100">100</div>
+                    <div class="chip" data-bet="500">500</div>
+                    <div class="chip" data-bet="1000">1K</div>
+                    <div class="chip" data-bet="5000">5K</div>
+                    <div class="chip" data-bet="10000">10K</div>
+                    <div class="chip" data-bet="50000">50K</div>
+                </div>
+                
+                <input type="text" id="customBet" class="input-field w-100 mb-3" placeholder="Своя ставка (100, 1000, всё)" autocomplete="off">
+                
+                <div id="gameControls" class="hidden">
+                    <div id="coinControls" class="hidden text-center">
+                        <div class="flex gap-2">
+                            <button type="button" class="btn btn-primary flex-1" onclick="playGame('heads')">🦅 Орёл</button>
+                            <button type="button" class="btn btn-primary flex-1" onclick="playGame('tails')">🪙 Решка</button>
+                        </div>
+                    </div>
+                    <div id="diceControls" class="hidden">
+                        <div class="game-grid">
+                            <button type="button" class="btn btn-game" onclick="playDice(1)">1</button>
+                            <button type="button" class="btn btn-game" onclick="playDice(2)">2</button>
+                            <button type="button" class="btn btn-game" onclick="playDice(3)">3</button>
+                            <button type="button" class="btn btn-game" onclick="playDice(4)">4</button>
+                            <button type="button" class="btn btn-game" onclick="playDice(5)">5</button>
+                            <button type="button" class="btn btn-game" onclick="playDice(6)">6</button>
+                        </div>
+                    </div>
+                    <div id="slotsControls" class="hidden text-center">
+                        <button type="button" class="btn btn-primary" onclick="playSlots()">🎰 Крутить!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка Банк -->
+        <div id="tabBank" style="display: none;">
+            <div class="card">
+                <h3 class="text-center mb-3">💳 Банковская карта</h3>
+                <div style="background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 12px; opacity: 0.8;">Баланс карты</div>
+                    <div style="font-size: 32px; font-weight: bold;" id="cardBalanceDisplay">0</div>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button type="button" class="btn btn-success flex-1" onclick="showDepositModal()">💰 Пополнить</button>
+                    <button type="button" class="btn btn-warning flex-1" onclick="showWithdrawModal()">💸 Снять</button>
+                </div>
+                
+                <div class="mt-4">
+                    <div class="flex-between mb-2">
+                        <span>📊 Кредитный рейтинг</span>
+                        <span id="creditScore">500</span>
+                    </div>
+                    <div class="credit-bar">
+                        <div class="credit-fill" id="creditBar" style="width: 50%;"></div>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-primary w-100 mt-4" onclick="showLoanModal()">💸 Взять кредит (до 1,000,000)</button>
+            </div>
+        </div>
+
+        <!-- Вкладка Профиль -->
+        <div id="tabProfile" style="display: none;">
+            <div class="card text-center">
+                <div class="pepe-avatar" id="profileAvatar">🐸</div>
+                <h3 id="profileName">Player</h3>
+                <p class="text-primary" id="profileUsername">@username</p>
+            </div>
+            
+            <div class="card">
+                <h4 class="mb-3">📊 Статистика</h4>
+                <div class="flex-between mb-2">
+                    <span>🎮 Игр сыграно:</span>
+                    <span id="gamesPlayed">0</span>
+                </div>
+                <div class="flex-between mb-2">
+                    <span>🏆 Побед:</span>
+                    <span id="gamesWins">0</span>
+                </div>
+                <div class="flex-between mb-2">
+                    <span>📈 Винрейт:</span>
+                    <span id="winRate">0%</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <button type="button" class="btn btn-primary w-100 mb-2" onclick="getDailyBonus()">🎁 Ежечасный бонус</button>
+            </div>
+            
+            <button type="button" class="btn btn-danger w-100" onclick="logout()">🚪 Выйти</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle" class="mb-3">Заголовок</h3>
+        <div id="modalBody"></div>
+        <div class="flex gap-2 mt-4">
+            <button type="button" class="btn btn-secondary flex-1" onclick="closeModal()">Отмена</button>
+            <button type="button" id="modalConfirmBtn" class="btn btn-primary flex-1">Подтвердить</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// =====================================================
+// SUPABASE КОНФИГУРАЦИЯ
+// =====================================================
+const SUPABASE_URL = 'https://exhbucpebzddkdnvwinp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4aGJ1Y3BlYnpkZGtkbnZ3aW5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDM0ODMsImV4cCI6MjA5NTM3OTQ4M30.QgtY9kN50VgAEWZ4iB9CYVVZEZ6D6E6PFb0-YAI3s-M';
+
+// Глобальные переменные
+let supabase = null;
+let currentUser = null;
+let currentBet = 100;
+let selectedGame = null;
+
+// =====================================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// =====================================================
+function formatMoney(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+    return n.toString();
+}
+
+function parseBet(text, maxBalance) {
+    if (!text) return 0;
+    text = text.toLowerCase().trim();
+    if (text === 'всё' || text === 'все' || text === 'all') return maxBalance;
+    let parsed = parseInt(text);
+    return isNaN(parsed) ? 0 : parsed;
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function showLoading() { 
+    const el = document.getElementById('loading');
+    if (el) el.classList.remove('hidden');
+}
+
+function hideLoading() { 
+    const el = document.getElementById('loading');
+    if (el) el.classList.add('hidden');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+function showModal(title, body, onConfirm) {
+    document.getElementById('modalTitle').innerText = title;
+    document.getElementById('modalBody').innerHTML = body;
+    document.getElementById('modal').classList.add('active');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    const newBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+    newBtn.onclick = () => {
+        closeModal();
+        if (onConfirm) onConfirm();
+    };
+}
+
+// =====================================================
+// ОБНОВЛЕНИЕ UI
+// =====================================================
+async function updateUI() {
+    if (!currentUser) return;
+    
+    document.getElementById('balanceCash').innerText = formatMoney(currentUser.balance);
+    document.getElementById('balanceCard').innerText = formatMoney(currentUser.card_balance);
+    document.getElementById('gameBalance').innerText = formatMoney(currentUser.balance);
+    document.getElementById('cardBalanceDisplay').innerText = formatMoney(currentUser.card_balance);
+    document.getElementById('creditScore').innerText = currentUser.credit_score || 500;
+    
+    const creditPercent = ((currentUser.credit_score || 500) / 1000) * 100;
+    document.getElementById('creditBar').style.width = creditPercent + '%';
+    
+    document.getElementById('gamesPlayed').innerText = currentUser.games_played || 0;
+    document.getElementById('gamesWins').innerText = currentUser.wins || 0;
+    
+    const winRate = currentUser.games_played > 0 
+        ? ((currentUser.wins / currentUser.games_played) * 100).toFixed(1) 
+        : 0;
+    document.getElementById('winRate').innerText = winRate + '%';
+    
+    document.getElementById('profileUsername').innerText = '@' + (currentUser.username || 'player');
+    document.getElementById('profileName').innerText = currentUser.fullname || currentUser.username || 'Player';
+}
+
+// =====================================================
+// ИГРЫ
+// =====================================================
+function selectGame(game) {
+    selectedGame = game;
+    document.getElementById('coinControls').classList.add('hidden');
+    document.getElementById('diceControls').classList.add('hidden');
+    document.getElementById('slotsControls').classList.add('hidden');
+    document.getElementById('gameControls').classList.remove('hidden');
+    
+    if (game === 'coin') {
+        document.getElementById('coinControls').classList.remove('hidden');
+    } else if (game === 'dice') {
+        document.getElementById('diceControls').classList.remove('hidden');
+    } else if (game === 'slots') {
+        document.getElementById('slotsControls').classList.remove('hidden');
+    }
+}
+
+function getBet() {
+    let bet = currentBet;
+    const customBet = document.getElementById('customBet').value;
+    if (customBet) {
+        bet = parseBet(customBet, currentUser.balance);
+    }
+    return Math.min(bet, currentUser.balance);
+}
+
+async function playGame(choice) {
+    const bet = getBet();
+    if (bet <= 0 || bet > currentUser.balance) {
+        showToast('❌ Неверная ставка');
+        return;
+    }
+    
+    showLoading();
+    const result = Math.random() < 0.5 ? 'орёл' : 'решка';
+    const isWin = (choice === 'heads' && result === 'орёл') || (choice === 'tails' && result === 'решка');
+    const newBalance = currentUser.balance + (isWin ? bet : -bet);
+    
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({
+                balance: newBalance,
+                games_played: (currentUser.games_played || 0) + 1,
+                wins: (currentUser.wins || 0) + (isWin ? 1 : 0)
+            })
+            .eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.balance = newBalance;
+        currentUser.games_played = (currentUser.games_played || 0) + 1;
+        currentUser.wins = (currentUser.wins || 0) + (isWin ? 1 : 0);
+        await updateUI();
+        
+        showToast(isWin ? `✅ Выпал ${result}\n+${formatMoney(bet)}` : `❌ Выпал ${result}\n-${formatMoney(bet)}`);
+    } catch(e) {
+        showToast('❌ Ошибка: ' + e.message);
+    }
+    hideLoading();
+}
+
+async function playDice(num) {
+    const bet = getBet();
+    if (bet <= 0 || bet > currentUser.balance) {
+        showToast('❌ Неверная ставка');
+        return;
+    }
+    
+    showLoading();
+    const roll = Math.floor(Math.random() * 6) + 1;
+    const isWin = roll === num;
+    const winAmount = isWin ? bet * 5 : 0;
+    const newBalance = currentUser.balance + (isWin ? winAmount : -bet);
+    
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({
+                balance: newBalance,
+                games_played: (currentUser.games_played || 0) + 1,
+                wins: (currentUser.wins || 0) + (isWin ? 1 : 0)
+            })
+            .eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.balance = newBalance;
+        currentUser.games_played = (currentUser.games_played || 0) + 1;
+        currentUser.wins = (currentUser.wins || 0) + (isWin ? 1 : 0);
+        await updateUI();
+        
+        showToast(isWin ? `✅ Выпало ${roll}\n+${formatMoney(winAmount)}` : `❌ Выпало ${roll}\n-${formatMoney(bet)}`);
+    } catch(e) {
+        showToast('❌ Ошибка: ' + e.message);
+    }
+    hideLoading();
+}
+
+async function playSlots() {
+    const bet = getBet();
+    if (bet <= 0 || bet > currentUser.balance) {
+        showToast('❌ Неверная ставка');
+        return;
+    }
+    
+    showLoading();
+    const value = Math.floor(Math.random() * 65);
+    let multiplier = 0;
+    if (value === 64) multiplier = 10;
+    else if ([1, 22, 43].includes(value)) multiplier = 5;
+    
+    const winAmount = multiplier > 0 ? bet * multiplier : 0;
+    const newBalance = currentUser.balance + (multiplier > 0 ? winAmount - bet : -bet);
+    
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({
+                balance: newBalance,
+                games_played: (currentUser.games_played || 0) + 1,
+                wins: (currentUser.wins || 0) + (multiplier > 0 ? 1 : 0)
+            })
+            .eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.balance = newBalance;
+        currentUser.games_played = (currentUser.games_played || 0) + 1;
+        if (multiplier > 0) currentUser.wins = (currentUser.wins || 0) + 1;
+        await updateUI();
+        
+        showToast(multiplier > 0 ? `✅ x${multiplier}\n+${formatMoney(winAmount)}` : `❌ -${formatMoney(bet)}`);
+    } catch(e) {
+        showToast('❌ Ошибка: ' + e.message);
+    }
+    hideLoading();
+}
+
+// =====================================================
+// БАНК
+// =====================================================
+async function depositToCard(amount) {
+    if (amount > currentUser.balance) {
+        showToast('❌ Недостаточно средств');
+        return;
+    }
+    showLoading();
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({
+                balance: currentUser.balance - amount,
+                card_balance: currentUser.card_balance + amount
+            })
+            .eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.balance -= amount;
+        currentUser.card_balance += amount;
+        await updateUI();
+        showToast(`✅ Пополнено: ${formatMoney(amount)}`);
+    } catch(e) {
+        showToast('❌ Ошибка: ' + e.message);
+    }
+    hideLoading();
+}
+
+async function withdrawFromCard(amount) {
+    if (amount > currentUser.card_balance) {
+        showToast('❌ Недостаточно на карте');
+        return;
+    }
+    showLoading();
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({
+                balance: currentUser.balance + amount,
+                card_balance: currentUser.card_balance - amount
+            })
+            .eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.balance += amount;
+        currentUser.card_balance -= amount;
+        await updateUI();
+        showToast(`✅ Снято: ${formatMoney(amount)}`);
+    } catch(e) {
+        showToast('❌ Ошибка: ' + e.message);
+    }
+    hideLoading();
+}
+
+async function applyLoan(amount) {
+    if (amount > 1000000) {
+        showToast('❌ Лимит 1,000,000');
+        return;
+    }
+    if ((currentUser.credit_score || 500) < 300) {
+        showToast('❌ Низкий кредитный рейтинг');
+        return;
+    }
+    showLoading();
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({
+                balance: currentUser.balance + amount,
+                credit_score: (currentUser.credit_score || 500) - 50
+            })
+            .eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.balance += amount;
+        currentUser.credit_score = (currentUser.credit_score || 500) - 50;
+        await updateUI();
+        showToast(`✅ Выдан кредит: ${formatMoney(amount)}`);
+    } catch(e) {
+        showToast('❌ Ошибка: ' + e.message);
+    }
+    hideLoading();
+}
+
+async function getDailyBonus() {
+    showLoading();
+    try {
+        const bonus = 500 + Math.floor(Math.random() * 500);
+        const { error } = await supabase
+            .from('users')
+            .update({
+                balance: currentUser.balance + bonus,
+                last_bonus: new Date().toISOString()
+            })
+            .eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.balance += bonus;
+        await updateUI();
+        showToast(`✅ +${formatMoney(bonus)} PEPE 🐸`);
+    } catch(e) {
+        showToast('❌ Ошибка: ' + e.message);
+    }
+    hideLoading();
+}
+
+// =====================================================
+// МОДАЛЬНЫЕ ОКНА
+// =====================================================
+function showDepositModal() {
+    const body = `<input type="number" id="modalAmount" class="input-field w-100" placeholder="Сумма" max="${currentUser.balance}">`;
+    showModal('Пополнение карты', body, async () => {
+        const amount = parseInt(document.getElementById('modalAmount').value);
+        if (amount > 0) await depositToCard(amount);
+    });
+}
+
+function showWithdrawModal() {
+    const body = `<input type="number" id="modalAmount" class="input-field w-100" placeholder="Сумма" max="${currentUser.card_balance}">`;
+    showModal('Снятие с карты', body, async () => {
+        const amount = parseInt(document.getElementById('modalAmount').value);
+        if (amount > 0) await withdrawFromCard(amount);
+    });
+}
+
+function showLoanModal() {
+    const body = `<input type="number" id="modalAmount" class="input-field w-100" placeholder="Сумма (макс 1,000,000)">`;
+    showModal('Кредит', body, async () => {
+        const amount = parseInt(document.getElementById('modalAmount').value);
+        if (amount > 0) await applyLoan(amount);
+    });
+}
+
+// =====================================================
+// АУТЕНТИФИКАЦИЯ
+// =====================================================
+let isRegisterMode = false;
+
+document.getElementById('showRegisterBtn').addEventListener('click', () => {
+    isRegisterMode = !isRegisterMode;
+    const fullnameField = document.getElementById('fullname');
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('showRegisterBtn');
+    
+    if (isRegisterMode) {
+        fullnameField.style.display = 'block';
+        loginBtn.innerText = 'Зарегистрироваться';
+        registerBtn.innerText = 'Назад';
+    } else {
+        fullnameField.style.display = 'none';
+        loginBtn.innerText = 'Войти';
+        registerBtn.innerText = 'Регистрация';
+    }
+});
+
+document.getElementById('authForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!supabase) {
+        showToast('❌ Подключение к серверу не установлено');
+        return;
+    }
+    
+    showLoading();
+    
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const fullname = document.getElementById('fullname').value.trim();
+    
+    if (!username) {
+        showToast('❌ Введите username');
+        hideLoading();
+        return;
+    }
+    
+    try {
+        if (isRegisterMode) {
+            const email = `${username}@pepegame.local`;
+            
+            const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password,
+                options: { data: { username: username, fullname: fullname || username } }
+            });
+            
+            if (error) throw error;
+            
+            if (data.user) {
+                await supabase.from('users').upsert({
+                    id: data.user.id,
+                    username: username,
+                    fullname: fullname || username,
+                    balance: 10000,
+                    card_balance: 0,
+                    games_played: 0,
+                    wins: 0,
+                    status: 'novice',
+                    credit_score: 500
+                });
+            }
+            
+            showToast('✅ Регистрация успешна! Войдите 🐸');
+            isRegisterMode = false;
+            document.getElementById('fullname').style.display = 'none';
+            document.getElementById('loginBtn').innerText = 'Войти';
+            document.getElementById('showRegisterBtn').innerText = 'Регистрация';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        } else {
+            const email = `${username}@pepegame.local`;
+            
+            const { data, error } = await supabase.auth.signInWithPassword({ 
+                email: email, 
+                password: password 
+            });
+            
+            if (error) throw error;
+            
+            let { data: userData } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+            
+            if (!userData) {
+                const { data: newUser } = await supabase
+                    .from('users')
+                    .insert({
+                        id: data.user.id,
+                        username: username,
+                        fullname: username,
+                        balance: 10000,
+                        card_balance: 0,
+                        games_played: 0,
+                        wins: 0,
+                        status: 'novice',
+                        credit_score: 500
+                    })
+                    .select()
+                    .single();
+                userData = newUser;
+            }
+            
+            currentUser = userData;
+            currentUser.id = data.user.id;
+            
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            await updateUI();
+        }
+    } catch (error) {
+        showToast('❌ ' + error.message);
+    }
+    hideLoading();
+});
+
+async function logout() {
+    if (supabase) await supabase.auth.signOut();
+    currentUser = null;
+    document.getElementById('authScreen').style.display = 'block';
+    document.getElementById('mainScreen').style.display = 'none';
+}
+
+// =====================================================
+// ИНИЦИАЛИЗАЦИЯ
+// =====================================================
+async function init() {
+    // Ждем загрузки Supabase
+    if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Проверяем сессию
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            let { data: userData } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+            
+            if (userData) {
+                currentUser = userData;
+                currentUser.id = session.user.id;
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('mainScreen').style.display = 'block';
+                await updateUI();
+            } else {
+                document.getElementById('authScreen').style.display = 'block';
+                document.getElementById('mainScreen').style.display = 'none';
+            }
+        } else {
+            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('mainScreen').style.display = 'none';
+        }
+    } else {
+        setTimeout(init, 100);
+        return;
+    }
+    
+    hideLoading();
+}
+
+// Табы
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        document.getElementById('tabGames').style.display = tabName === 'games' ? 'block' : 'none';
+        document.getElementById('tabBank').style.display = tabName === 'bank' ? 'block' : 'none';
+        document.getElementById('tabProfile').style.display = tabName === 'profile' ? 'block' : 'none';
+    });
+});
+
+// Ставки
+document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentBet = parseInt(chip.dataset.bet);
+    });
+});
+
+// Запуск
+init();
+</script>
+</body>
+</html>
