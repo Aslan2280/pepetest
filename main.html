@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🐸 Pepe Game - Casino</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1a2e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pepeJump {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0a0e1a 100%);
+            padding: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .balance-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .balance-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 40px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .balance-item .icon {
+            font-size: 20px;
+        }
+
+        .balance-item .value {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            color: white;
+        }
+
+        .btn-game {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid #22c55e;
+            color: white;
+            padding: 16px;
+            font-size: 16px;
+        }
+
+        .btn-game:hover {
+            background: rgba(34, 197, 94, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .bet-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .chip {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22c55e;
+            border-radius: 40px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .chip:hover, .chip.active {
+            background: #22c55e;
+            transform: scale(1.05);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 40px;
+            color: white;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #22c55e;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 60px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: #22c55e;
+        }
+
+        .nft-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .nft-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nft-card:hover {
+            transform: translateY(-2px);
+            background: rgba(34, 197, 94, 0.2);
+        }
+
+        .nft-emoji {
+            font-size: 48px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1E293B;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 350px;
+            width: 90%;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(34, 197, 94, 0.3);
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .text-primary { color: #22c55e; }
+        .text-success { color: #10B981; }
+        .text-danger { color: #EF4444; }
+        .text-warning { color: #F59E0B; }
+        
+        .mt-2 { margin-top: 8px; }
+        .mt-3 { margin-top: 12px; }
+        .mt-4 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-3 { margin-bottom: 12px; }
+        .mb-4 { margin-bottom: 16px; }
+        
+        .flex { display: flex; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .flex-1 { flex: 1; }
+        .gap-2 { gap: 8px; }
+        .gap-3 { gap: 12px; }
+        
+        .text-center { text-align: center; }
+        .w-100 { width: 100%; }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            z-index: 3000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .pepe-avatar {
+            font-size: 48px;
+            animation: pepeJump 2s infinite;
+        }
+
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .credit-bar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .credit-fill {
+            background: linear-gradient(90deg, #F59E0B, #22c55e);
+            border-radius: 10px;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+<div class="loading hidden" id="loading">
+    <div class="spinner"></div>
+</div>
+
+<div id="authScreen">
+    <div class="container" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+        <div class="card" style="width: 100%;">
+            <div class="text-center mb-4">
+                <div class="pepe-avatar">🐸</div>
+                <h1 style="font-size: 28px; margin-top: 12px;">PEPE GAME</h1>
+                <p style="color: #94A3B8;">Войдите или зарегистрируйтесь</p>
+            </div>
+            
+            <form id="authForm">
+                <input type="email" id="email" class="input-field mb-3" placeholder="Email" required>
+                <input type="password" id="password" class="input-field mb-3" placeholder="Пароль" required>
+                <input type="text" id="username" class="input-field mb-3" placeholder="Имя пользователя (Pepe lover)" style="display: none;">
+                
+                <div class="flex gap-2">
+                    <button type="submit" id="loginBtn" class="btn btn-primary w-100">Войти</button>
+                    <button type="button" id="showRegisterBtn" class="btn btn-secondary w-100">Регистрация</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="mainScreen" style="display: none;">
+    <div class="header">
+        <div class="balance-bar">
+            <div class="balance-item">
+                <span class="icon">🐸</span>
+                <span class="value" id="balanceCash">0</span>
+            </div>
+            <div class="balance-item">
+                <span class="icon">💳</span>
+                <span class="value" id="balanceCard">0</span>
+            </div>
+            <div class="balance-item">
+                <span class="icon">👤</span>
+                <span class="value" id="userStatus">🐸</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tab-bar">
+            <div class="tab active" data-tab="games">🎮 Игры</div>
+            <div class="tab" data-tab="bank">🏦 Банк</div>
+            <div class="tab" data-tab="nft">🖼️ NFT</div>
+            <div class="tab" data-tab="profile">👤 Профиль</div>
+        </div>
+
+        <!-- Вкладка Игры -->
+        <div id="tabGames">
+            <div class="card">
+                <h3 class="mb-3">🐸 Баланс PEPE: <span id="gameBalance" class="text-primary">0</span></h3>
+                
+                <div class="game-grid">
+                    <button class="btn btn-game" onclick="selectGame('coin')">🪙 Монетка</button>
+                    <button class="btn btn-game" onclick="selectGame('dice')">🎲 Кубик</button>
+                    <button class="btn btn-game" onclick="selectGame('slots')">🎰 Слоты</button>
+                </div>
+                
+                <div class="bet-chips" id="betChips">
+                    <div class="chip active" data-bet="100">100</div>
+                    <div class="chip" data-bet="500">500</div>
+                    <div class="chip" data-bet="1000">1K</div>
+                    <div class="chip" data-bet="5000">5K</div>
+                    <div class="chip" data-bet="10000">10K</div>
+                    <div class="chip" data-bet="50000">50K</div>
+                </div>
+                
+                <input type="text" id="customBet" class="input-field w-100 mb-3" placeholder="Своя ставка (100, 1к, 1кк, всё)">
+                
+                <div id="gameControls" class="hidden">
+                    <div id="coinControls" class="hidden text-center">
+                        <div class="flex gap-2">
+                            <button class="btn btn-primary flex-1" onclick="playGame('heads')">🦅 Орёл</button>
+                            <button class="btn btn-primary flex-1" onclick="playGame('tails')">🪙 Решка</button>
+                        </div>
+                    </div>
+                    <div id="diceControls" class="hidden">
+                        <div class="game-grid">
+                            <button class="btn btn-game" onclick="playDice(1)">1</button>
+                            <button class="btn btn-game" onclick="playDice(2)">2</button>
+                            <button class="btn btn-game" onclick="playDice(3)">3</button>
+                            <button class="btn btn-game" onclick="playDice(4)">4</button>
+                            <button class="btn btn-game" onclick="playDice(5)">5</button>
+                            <button class="btn btn-game" onclick="playDice(6)">6</button>
+                        </div>
+                    </div>
+                    <div id="slotsControls" class="hidden text-center">
+                        <button class="btn btn-primary" onclick="playSlots()">🎰 Крутить!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка Банк -->
+        <div id="tabBank" style="display: none;">
+            <div class="card">
+                <h3 class="text-center mb-3">💳 Банковская карта Pepe</h3>
+                <div style="background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 12px; opacity: 0.8;">Баланс карты</div>
+                    <div style="font-size: 32px; font-weight: bold;" id="cardBalanceDisplay">0</div>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button class="btn btn-success flex-1" onclick="showDepositModal()">💰 Пополнить</button>
+                    <button class="btn btn-warning flex-1" onclick="showWithdrawModal()">💸 Снять</button>
+                </div>
+                
+                <div class="mt-4">
+                    <div class="flex-between mb-2">
+                        <span>📊 Кредитный рейтинг Pepe</span>
+                        <span id="creditScore">500</span>
+                    </div>
+                    <div class="credit-bar">
+                        <div class="credit-fill" id="creditBar" style="width: 50%;"></div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary w-100 mt-4" onclick="showLoanModal()">💸 Взять кредит (до 1,000,000)</button>
+            </div>
+        </div>
+
+        <!-- Вкладка NFT -->
+        <div id="tabNFT" style="display: none;">
+            <div class="flex gap-2 mb-3">
+                <button class="btn btn-secondary flex-1" onclick="loadUserNFTs()">📦 Мои NFT</button>
+                <button class="btn btn-secondary flex-1" onclick="loadShopItems()">🏪 Магазин</button>
+                <button class="btn btn-secondary flex-1" onclick="loadMarketListings()">🏪 Рынок</button>
+            </div>
+            <div id="nftContent">
+                <div class="card text-center">
+                    <p>🐸 Выберите раздел Pepe NFT</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка Профиль -->
+        <div id="tabProfile" style="display: none;">
+            <div class="card text-center">
+                <div class="pepe-avatar" id="profileAvatar">🐸</div>
+                <h3 id="profileName">Pepe Lover</h3>
+                <p class="text-primary" id="profileId">ID: ...</p>
+            </div>
+            
+            <div class="card">
+                <h4 class="mb-3">📊 Статистика Pepe</h4>
+                <div class="flex-between mb-2">
+                    <span>🎮 Игр сыграно:</span>
+                    <span id="gamesPlayed">0</span>
+                </div>
+                <div class="flex-between mb-2">
+                    <span>🏆 Побед:</span>
+                    <span id="gamesWins">0</span>
+                </div>
+                <div class="flex-between mb-2">
+                    <span>📈 Винрейт:</span>
+                    <span id="winRate">0%</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h4 class="mb-3">⭐ Ваш статус Pepe</h4>
+                <div id="currentStatusDisplay" class="text-center" style="padding: 16px; background: rgba(34,197,94,0.2); border-radius: 16px;">
+                    <span style="font-size: 32px;" id="statusEmoji">🐸</span>
+                    <div id="statusName">Pepe Новичок</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h4 class="mb-3">🏪 Магазин статусов</h4>
+                <div id="statusShop"></div>
+            </div>
+            
+            <div class="card">
+                <button class="btn btn-primary w-100 mb-2" onclick="getDailyBonus()">🎁 Ежечасный бонус Pepe</button>
+                <button class="btn btn-secondary w-100" onclick="showPromoModal()">🎫 Активировать промокод</button>
+            </div>
+            
+            <button class="btn btn-danger w-100" onclick="logout()">🚪 Выйти</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальные окна -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle" class="mb-3">Заголовок</h3>
+        <div id="modalBody"></div>
+        <div class="flex gap-2 mt-4">
+            <button class="btn btn-secondary flex-1" onclick="closeModal()">Отмена</button>
+            <button id="modalConfirmBtn" class="btn btn-primary flex-1">Подтвердить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Конфигурация Supabase для Pepe Game
+const SUPABASE_URL = 'https://exhbucpebzddkdnvwinp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4aGJ1Y3BlYnpkZGtkbnZ3aW5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDM0ODMsImV4cCI6MjA5NTM3OTQ4M30.QgtY9kN50VgAEWZ4iB9CYVVZEZ6D6E6PFb0-YAI3s-M';
+
+// Инициализация Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Глобальные переменные
+let currentUser = null;
+let currentBet = 100;
+let selectedGame = null;
+let currentNFTs = [];
+let currentStatuses = [];
+let shopItems = [];
+
+// Вспомогательные функции
+function formatMoney(n) {
+    if (n >= 1000000000) return (n / 1000000000).toFixed(1) + 'B';
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+    return n.toString();
+}
+
+function parseBet(text, maxBalance) {
+    if (!text) return 0;
+    text = text.toLowerCase().trim();
+    if (text === 'всё' || text === 'все' || text === 'all') return maxBalance;
+    const match = text.match(/^(\d+(?:\.\d+)?)(к+)$/);
+    if (match) {
+        let num = parseFloat(match[1]);
+        let kCount = match[2].length;
+        let multiplier = kCount === 1 ? 1000 : (kCount === 2 ? 1000000 : 1000000000);
+        return Math.floor(num * multiplier);
+    }
+    let parsed = parseInt(text);
+    return isNaN(parsed) ? 0 : parsed;
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function showLoading() { 
+    document.getElementById('loading').classList.remove('hidden'); 
+}
+
+function hideLoading() { 
+    document.getElementById('loading').classList.add('hidden'); 
+}
+
+function showModal(title, body, onConfirm) {
+    document.getElementById('modalTitle').innerText = title;
+    document.getElementById('modalBody').innerHTML = body;
+    document.getElementById('modal').classList.add('active');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    const newBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+    newBtn.onclick = () => {
+        closeModal();
+        if (onConfirm) onConfirm();
+    };
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+// Инициализация таблиц
+async function initTables() {
+    try {
+        // Проверяем есть ли таблица statuses, если нет - создаем
+        const { data: statuses } = await supabase.from('statuses').select('*');
+        if (!statuses || statuses.length === 0) {
+            // Создаем статусы по умолчанию
+            const defaultStatuses = [
+                { id: 'pepe_novice', name: 'Pepe Новичок', emoji: '🐸', price: 0, min_bonus: 100, max_bonus: 500, sellable: false },
+                { id: 'pepe_pro', name: 'Pepe Профи', emoji: '🐸⚡', price: 10000, min_bonus: 500, max_bonus: 1500, sellable: true },
+                { id: 'pepe_king', name: 'Pepe Король', emoji: '👑🐸', price: 50000, min_bonus: 1000, max_bonus: 3000, sellable: true },
+                { id: 'pepe_legend', name: 'Pepe Легенда', emoji: '⭐🐸⭐', price: 200000, min_bonus: 2000, max_bonus: 5000, sellable: true }
+            ];
+            for (const status of defaultStatuses) {
+                await supabase.from('statuses').upsert(status);
+            }
+        }
+    } catch(e) {
+        console.log('Init tables error:', e);
+    }
+}
+
+// Обновление UI
+async function updateUI() {
+    if (!currentUser) return;
+    
+    document.getElementById('balanceCash').innerText = formatMoney(currentUser.balance);
+    document.getElementById('balanceCard').innerText = formatMoney(currentUser.card_balance);
+    document.getElementById('gameBalance').innerText = formatMoney(currentUser.balance);
+    document.getElementById('cardBalanceDisplay').innerText = formatMoney(currentUser.card_balance);
+    document.getElementById('creditScore').innerText = currentUser.credit_score || 500;
+    const creditPercent = ((currentUser.credit_score || 500) / 1000) * 100;
+    document.getElementById('creditBar').style.width = creditPercent + '%';
+    
+    document.getElementById('gamesPlayed').innerText = currentUser.games_played || 0;
+    document.getElementById('gamesWins').innerText = currentUser.wins || 0;
+    const winRate = currentUser.games_played > 0 ? ((currentUser.wins / currentUser.games_played) * 100).toFixed(1) : 0;
+    document.getElementById('winRate').innerText = winRate + '%';
+    
+    document.getElementById('profileId').innerText = 'ID: ' + (currentUser.id?.substring(0, 12) || '...');
+    document.getElementById('profileName').innerText = currentUser.username || 'Pepe Lover';
+    
+    await loadStatuses();
+}
+
+// Статусы
+async function loadStatuses() {
+    const { data } = await supabase.from('statuses').select('*');
+    if (data && data.length > 0) {
+        currentStatuses = data;
+        const currentStatus = data.find(s => s.id === currentUser.status) || data[0];
+        document.getElementById('userStatus').innerHTML = currentStatus?.emoji || '🐸';
+        document.getElementById('statusEmoji').innerHTML = currentStatus?.emoji || '🐸';
+        document.getElementById('statusName').innerText = currentStatus?.name || 'Pepe Новичок';
+        document.getElementById('profileAvatar').innerHTML = currentStatus?.emoji || '🐸';
+        
+        const statusShop = document.getElementById('statusShop');
+        statusShop.innerHTML = '';
+        for (const status of data) {
+            if (status.sellable && status.id !== currentUser.status) {
+                const div = document.createElement('div');
+                div.className = 'flex-between mb-2';
+                div.innerHTML = `
+                    <span>${status.emoji} ${status.name}</span>
+                    <div class="flex gap-2">
+                        <span class="text-primary">${formatMoney(status.price)}</span>
+                        <button class="btn btn-primary" style="padding: 4px 12px;" onclick="buyStatus('${status.id}')">Купить</button>
+                    </div>
+                `;
+                statusShop.appendChild(div);
+            }
+        }
+    }
+}
+
+async function buyStatus(statusId) {
+    const status = currentStatuses.find(s => s.id === statusId);
+    if (!status) return;
+    if (currentUser.balance < status.price) {
+        showToast('❌ Недостаточно PEPE');
+        return;
+    }
+    showLoading();
+    const { error } = await supabase
+        .from('users')
+        .update({ 
+            balance: currentUser.balance - status.price,
+            status: statusId 
+        })
+        .eq('id', currentUser.id);
+    
+    if (!error) {
+        currentUser.balance -= status.price;
+        currentUser.status = statusId;
+        await updateUI();
+        showToast(`✅ Куплен статус ${status.emoji} ${status.name}`);
+    }
+    hideLoading();
+}
+
+// Игры
+function selectGame(game) {
+    selectedGame = game;
+    document.getElementById('coinControls').classList.add('hidden');
+    document.getElementById('diceControls').classList.add('hidden');
+    document.getElementById('slotsControls').classList.add('hidden');
+    document.getElementById('gameControls').classList.remove('hidden');
+    
+    if (game === 'coin') {
+        document.getElementById('coinControls').classList.remove('hidden');
+    } else if (game === 'dice') {
+        document.getElementById('diceControls').classList.remove('hidden');
+    } else if (game === 'slots') {
+        document.getElementById('slotsControls').classList.remove('hidden');
+    }
+}
+
+function getBet() {
+    let bet = currentBet;
+    const customBet = document.getElementById('customBet').value;
+    if (customBet) {
+        bet = parseBet(customBet, currentUser.balance);
+    }
+    return Math.min(bet, currentUser.balance);
+}
+
+async function playGame(choice) {
+    const bet = getBet();
+    if (bet <= 0 || bet > currentUser.balance) {
+        showToast('❌ Неверная ставка или недостаточно PEPE');
+        return;
+    }
+    
+    showLoading();
+    const result = Math.random() < 0.5 ? 'орёл' : 'решка';
+    const isWin = (choice === 'heads' && result === 'орёл') || (choice === 'tails' && result === 'решка');
+    const winAmount = isWin ? bet * 2 : 0;
+    const newBalance = currentUser.balance + (isWin ? bet : -bet);
+    
+    const { error } = await supabase
+        .from('users')
+        .update({
+            balance: newBalance,
+            games_played: (currentUser.games_played || 0) + 1,
+            wins: (currentUser.wins || 0) + (isWin ? 1 : 0)
+        })
+        .eq('id', currentUser.id);
+    
+    if (!error) {
+        currentUser.balance = newBalance;
+        currentUser.games_played = (currentUser.games_played || 0) + 1;
+        currentUser.wins = (currentUser.wins || 0) + (isWin ? 1 : 0);
+        await updateUI();
+        
+        const message = isWin 
+            ? `✅ Выпал ${result}\n+${formatMoney(winAmount)} PEPE\n🐸 ${formatMoney(newBalance)}`
+            : `❌ Выпал ${result}\n-${formatMoney(bet)} PEPE\n🐸 ${formatMoney(newBalance)}`;
+        showToast(message);
+    }
+    hideLoading();
+}
+
+async function playDice(num) {
+    const bet = getBet();
+    if (bet <= 0 || bet > currentUser.balance) {
+        showToast('❌ Неверная ставка или недостаточно PEPE');
+        return;
+    }
+    
+    showLoading();
+    const roll = Math.floor(Math.random() * 6) + 1;
+    const isWin = roll === num;
+    const winAmount = isWin ? bet * 6 : 0;
+    const newBalance = currentUser.balance + (isWin ? winAmount - bet : -bet);
+    
+    const { error } = await supabase
+        .from('users')
+        .update({
+            balance: newBalance,
+            games_played: (currentUser.games_played || 0) + 1,
+            wins: (currentUser.wins || 0) + (isWin ? 1 : 0)
+        })
+        .eq('id', currentUser.id);
+    
+    if (!error) {
+        currentUser.balance = newBalance;
+        currentUser.games_played = (currentUser.games_played || 0) + 1;
+        currentUser.wins = (currentUser.wins || 0) + (isWin ? 1 : 0);
+        await updateUI();
+        
+        const message = isWin 
+            ? `✅ Выпало ${roll}\n+${formatMoney(winAmount)} PEPE\n🐸 ${formatMoney(newBalance)}`
+            : `❌ Выпало ${roll}\n-${formatMoney(bet)} PEPE\n🐸 ${formatMoney(newBalance)}`;
+        showToast(message);
+    }
+    hideLoading();
+}
+
+async function playSlots() {
+    const bet = getBet();
+    if (bet <= 0 || bet > currentUser.balance) {
+        showToast('❌ Неверная ставка или недостаточно PEPE');
+        return;
+    }
+    
+    showLoading();
+    const value = Math.floor(Math.random() * 65);
+    let multiplier = 0;
+    if (value === 64) multiplier = 10;
+    else if ([1, 22, 43].includes(value)) multiplier = 5;
+    
+    const isWin = multiplier > 0;
+    const winAmount = isWin ? bet * multiplier : 0;
+    const newBalance = currentUser.balance + (isWin ? winAmount - bet : -bet);
+    
+    const { error } = await supabase
+        .from('users')
+        .update({
+            balance: newBalance,
+            games_played: (currentUser.games_played || 0) + 1,
+            wins: (currentUser.wins || 0) + (isWin ? 1 : 0)
+        })
+        .eq('id', currentUser.id);
+    
+    if (!error) {
+        currentUser.balance = newBalance;
+        currentUser.games_played = (currentUser.games_played || 0) + 1;
+        currentUser.wins = (currentUser.wins || 0) + (isWin ? 1 : 0);
+        await updateUI();
+        
+        const message = isWin 
+            ? `✅ x${multiplier}\n+${formatMoney(winAmount)} PEPE\n🐸 ${formatMoney(newBalance)}`
+            : `❌ -${formatMoney(bet)} PEPE\n🐸 ${formatMoney(newBalance)}`;
+        showToast(message);
+    }
+    hideLoading();
+}
+
+// Банк
+async function depositToCard(amount) {
+    if (amount > currentUser.balance) {
+        showToast('❌ Недостаточно PEPE');
+        return;
+    }
+    showLoading();
+    const { error } = await supabase
+        .from('users')
+        .update({
+            balance: currentUser.balance - amount,
+            card_balance: currentUser.card_balance + amount
+        })
+        .eq('id', currentUser.id);
+    
+    if (!error) {
+        currentUser.balance -= amount;
+        currentUser.card_balance += amount;
+        await updateUI();
+        showToast(`✅ Пополнено: ${formatMoney(amount)} PEPE`);
+    }
+    hideLoading();
+}
+
+async function withdrawFromCard(amount) {
+    if (amount > currentUser.card_balance) {
+        showToast('❌ Недостаточно на карте');
+        return;
+    }
+    showLoading();
+    const { error } = await supabase
+        .from('users')
+        .update({
+            balance: currentUser.balance + amount,
+            card_balance: currentUser.card_balance - amount
+        })
+        .eq('id', currentUser.id);
+    
+    if (!error) {
+        currentUser.balance += amount;
+        currentUser.card_balance -= amount;
+        await updateUI();
+        showToast(`✅ Снято: ${formatMoney(amount)} PEPE`);
+    }
+    hideLoading();
+}
+
+async function applyLoan(amount) {
+    if (amount > 1000000) {
+        showToast('❌ Сумма превышает лимит (макс 1,000,000)');
+        return;
+    }
+    if ((currentUser.credit_score || 500) < 300) {
+        showToast('❌ Низкий кредитный рейтинг (нужно 300+)');
+        return;
+    }
+    showLoading();
+    const { error } = await supabase
+        .from('users')
+        .update({
+            balance: currentUser.balance + amount,
+            credit_score: (currentUser.credit_score || 500) - 50
+        })
+        .eq('id', currentUser.id);
+    
+    if (!error) {
+        currentUser.balance += amount;
+        currentUser.credit_score = (currentUser.credit_score || 500) - 50;
+        await updateUI();
+        showToast(`✅ Выдан кредит: ${formatMoney(amount)} PEPE`);
+    }
+    hideLoading();
+}
+
+async function getDailyBonus() {
+    showLoading();
+    const lastBonus = currentUser.last_bonus ? new Date(currentUser.last_bonus) : null;
+    if (lastBonus && (Date.now() - lastBonus.getTime()) < 3600000) {
+        const minutesLeft = Math.ceil((3600000 - (Date.now() - lastBonus.getTime())) / 60000);
+        showToast(`⏰ Бонус через ${minutesLeft} минут`);
+        hideLoading();
+        return;
+    }
+    
+    const status = currentStatuses.find(s => s.id === currentUser.status) || currentStatuses[0];
+    const bonus = status ? Math.floor(Math.random() * (status.max_bonus - status.min_bonus + 1) + status.min_bonus) : 500;
+    
+    const { error } = await supabase
+        .from('users')
+        .update({
+            balance: currentUser.balance + bonus,
+            last_bonus: new Date().toISOString()
+        })
+        .eq('id', currentUser.id);
+    
+    if (!error) {
+        currentUser.balance += bonus;
+        currentUser.last_bonus = new Date().toISOString();
+        await updateUI();
+        showToast(`✅ +${formatMoney(bonus)} PEPE 🐸`);
+    }
+    hideLoading();
+}
+
+async function usePromoCode(code) {
+    showLoading();
+    const { data: promo } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', code.toUpperCase())
+        .single();
+    
+    if (!promo) {
+        showToast('❌ Промокод не найден');
+        hideLoading();
+        return;
+    }
+    
+    if (promo.creator_id === currentUser.id) {
+        showToast('❌ Нельзя использовать свой промокод');
+        hideLoading();
+        return;
+    }
+    
+    if (new Date(promo.expires) < new Date()) {
+        showToast('❌ Промокод просрочен');
+        hideLoading();
+        return;
+    }
+    
+    if (promo.used >= promo.limit_uses) {
+        showToast('❌ Лимит использований исчерпан');
+        hideLoading();
+        return;
+    }
+    
+    const users = promo.users || [];
+    if (users.includes(currentUser.id)) {
+        showToast('❌ Вы уже использовали этот промокод');
+        hideLoading();
+        return;
+    }
+    
+    users.push(currentUser.id);
+    
+    const { error } = await supabase
+        .from('promo_codes')
+        .update({
+            used: promo.used + 1,
+            users: users
+        })
+        .eq('code', code.toUpperCase());
+    
+    if (!error) {
+        const { error: userError } = await supabase
+            .from('users')
+            .update({ balance: currentUser.balance + promo.reward })
+            .eq('id', currentUser.id);
+        
+        if (!userError) {
+            currentUser.balance += promo.reward;
+            await updateUI();
+            showToast(`✅ +${formatMoney(promo.reward)} PEPE 🐸`);
+        }
+    }
+    hideLoading();
+}
+
+// NFT функции
+async function loadUserNFTs() {
+    showLoading();
+    const { data } = await supabase
+        .from('nfts')
+        .select('*')
+        .eq('owner_id', currentUser.id);
+    
+    const container = document.getElementById('nftContent');
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="card text-center"><p>📭 У вас нет Pepe NFT</p><p>🐸 Купите первого Pepe в магазине!</p></div>';
+    } else {
+        let html = '<div class="nft-grid">';
+        for (const nft of data) {
+            html += `
+                <div class="nft-card" onclick="alert('${nft.name}\\n${nft.description || 'Нет описания'}\\nКуплен: ${nft.purchased_at?.substring(0,10) || '?'}')">
+                    <div class="nft-emoji">${nft.emoji || '🐸'}</div>
+                    <div><strong>${nft.name}</strong></div>
+                    <div style="font-size: 12px; color: #94A3B8;">#${nft.global_number}</div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+    hideLoading();
+}
+
+async function loadShopItems() {
+    showLoading();
+    const { data } = await supabase.from('shop_items').select('*');
+    shopItems = data || [];
+    
+    const container = document.getElementById('nftContent');
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="card text-center"><p>🏪 Магазин Pepe NFT пуст</p><button class="btn btn-primary mt-3" onclick="createSampleShop()">Создать Pepe NFT</button></div>';
+    } else {
+        let html = '<div class="nft-grid">';
+        for (const item of data) {
+            html += `
+                <div class="nft-card">
+                    <div class="nft-emoji">${item.emoji || '🐸'}</div>
+                    <div><strong>${item.name}</strong></div>
+                    <div class="text-primary">${formatMoney(item.price)} PEPE</div>
+                    <div style="font-size: 12px;">Осталось: ${item.quantity}</div>
+                    <button class="btn btn-primary" style="margin-top: 8px; padding: 6px 12px;" onclick="buyNFT('${item.id}', ${item.price})">Купить</button>
+                </div>
+            `;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+    hideLoading();
+}
+
+async function createSampleShop() {
+    showLoading();
+    
+    const sampleItems = [
+        { id: 'pepe_classic', name: 'Classic Pepe', emoji: '🐸', price: 50000, quantity: 100, description: 'Оригинальный Pepe' },
+        { id: 'pepe_smug', name: 'Smug Pepe', emoji: '😏🐸', price: 100000, quantity: 50, description: 'Довольный Pepe' },
+        { id: 'pepe_sad', name: 'Sad Pepe', emoji: '😢🐸', price: 25000, quantity: 200, description: 'Грустный Pepe' },
+        { id: 'pepe_rare', name: 'Rare Pepe', emoji: '💎🐸', price: 500000, quantity: 10, description: 'Редчайший Pepe' },
+        { id: 'pepe_king', name: 'King Pepe', emoji: '👑🐸', price: 1000000, quantity: 5, description: 'Король всех Pepe' }
+    ];
+    
+    for (const item of sampleItems) {
+        await supabase.from('shop_items').upsert(item);
+    }
+    
+    await loadShopItems();
+    hideLoading();
+    showToast('✅ Pepe NFT созданы! 🐸');
+}
+
+async function buyNFT(itemId, price) {
+    if (currentUser.balance < price) {
+        showToast('❌ Недостаточно PEPE');
+        return;
+    }
+    
+    showLoading();
+    const { data: item } = await supabase
+        .from('shop_items')
+        .select('*')
+        .eq('id', itemId)
+        .single();
+    
+    if (!item || item.quantity <= 0) {
+        showToast('❌ Pepe NFT закончился');
+        hideLoading();
+        return;
+    }
+    
+    const { data: existing } = await supabase
+        .from('nfts')
+        .select('global_number')
+        .eq('item_id', itemId);
+    
+    let maxNumber = 0;
+    for (const nft of existing || []) {
+        if (nft.global_number > maxNumber) maxNumber = nft.global_number;
+    }
+    const globalNumber = maxNumber + 1;
+    const uniqueId = `${currentUser.id}_${itemId}_${globalNumber}_${Date.now()}`;
+    
+    await supabase.from('users').update({ balance: currentUser.balance - price }).eq('id', currentUser.id);
+    await supabase.from('shop_items').update({ quantity: item.quantity - 1, sold: (item.sold || 0) + 1 }).eq('id', itemId);
+    await supabase.from('nfts').insert({
+        unique_id: uniqueId,
+        item_id: itemId,
+        name: item.name,
+        emoji: item.emoji,
+        description: item.description,
+        global_number: globalNumber,
+        purchased_at: new Date().toISOString(),
+        owner_id: currentUser.id
+    });
+    
+    currentUser.balance -= price;
+    await updateUI();
+    showToast(`✅ Куплен ${item.emoji} ${item.name} #${globalNumber} 🐸`);
+    hideLoading();
+}
+
+async function loadMarketListings() {
+    showLoading();
+    const { data } = await supabase
+        .from('market')
+        .select('*')
+        .eq('status', 'active')
+        .order('listed_at', { ascending: false });
+    
+    const container = document.getElementById('nftContent');
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="card text-center"><p>🏪 Рынок Pepe пуст</p></div>';
+    } else {
+        let html = '';
+        for (const listing of data) {
+            const nft = listing.nft;
+            html += `
+                <div class="card">
+                    <div class="flex-between">
+                        <div>
+                            <span style="font-size: 32px;">${nft.emoji || '🐸'}</span>
+                            <div><strong>${nft.name}</strong> #${nft.global_number}</div>
+                            <div style="font-size: 12px;">${nft.description || 'Нет описания'}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-primary" style="font-size: 18px; font-weight: bold;">${formatMoney(listing.price)}</div>
+                            <button class="btn btn-success" style="margin-top: 8px; padding: 6px 12px;" onclick="buyFromMarket(${listing.id}, ${listing.price})">Купить</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+    hideLoading();
+}
+
+async function buyFromMarket(listingId, price) {
+    if (currentUser.balance < price) {
+        showToast('❌ Недостаточно PEPE');
+        return;
+    }
+    
+    showLoading();
+    const { data: listing } = await supabase
+        .from('market')
+        .select('*')
+        .eq('id', listingId)
+        .single();
+    
+    if (!listing || listing.status !== 'active') {
+        showToast('❌ Объявление не найдено');
+        hideLoading();
+        return;
+    }
+    
+    if (listing.seller_id === currentUser.id) {
+        showToast('❌ Нельзя купить своего Pepe');
+        hideLoading();
+        return;
+    }
+    
+    const { data: seller } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('id', listing.seller_id)
+        .single();
+    
+    await supabase.from('users').update({ balance: currentUser.balance - price }).eq('id', currentUser.id);
+    await supabase.from('users').update({ balance: (seller?.balance || 0) + price }).eq('id', listing.seller_id);
+    
+    const nft = listing.nft;
+    const newUniqueId = `${currentUser.id}_${nft.item_id}_${nft.global_number}_${Date.now()}`;
+    
+    await supabase.from('nfts').insert({
+        unique_id: newUniqueId,
+        item_id: nft.item_id,
+        name: nft.name,
+        emoji: nft.emoji,
+        description: nft.description,
+        global_number: nft.global_number,
+        purchased_at: new Date().toISOString(),
+        owner_id: currentUser.id
+    });
+    
+    await supabase.from('market').update({ status: 'sold' }).eq('id', listingId);
+    
+    currentUser.balance -= price;
+    await updateUI();
+    showToast(`✅ Pepe NFT куплен за ${formatMoney(price)} 🐸`);
+    hideLoading();
+}
+
+// Модальные окна
+function showDepositModal() {
+    const body = `<input type="number" id="modalAmount" class="input-field w-100" placeholder="Сумма PEPE" max="${currentUser.balance}">`;
+    showModal('Пополнение карты Pepe', body, async () => {
+        const amount = parseInt(document.getElementById('modalAmount').value);
+        if (amount > 0) await depositToCard(amount);
+    });
+}
+
+function showWithdrawModal() {
+    const body = `<input type="number" id="modalAmount" class="input-field w-100" placeholder="Сумма PEPE" max="${currentUser.card_balance}">`;
+    showModal('Снятие с карты Pepe', body, async () => {
+        const amount = parseInt(document.getElementById('modalAmount').value);
+        if (amount > 0) await withdrawFromCard(amount);
+    });
+}
+
+function showLoanModal() {
+    const body = `<input type="number" id="modalAmount" class="input-field w-100" placeholder="Сумма PEPE (макс 1,000,000)">`;
+    showModal('Кредит Pepe', body, async () => {
+        const amount = parseInt(document.getElementById('modalAmount').value);
+        if (amount > 0) await applyLoan(amount);
+    });
+}
+
+function showPromoModal() {
+    const body = `<input type="text" id="modalCode" class="input-field w-100" placeholder="Введите промокод Pepe">`;
+    showModal('Промокод Pepe', body, async () => {
+        const code = document.getElementById('modalCode').value;
+        if (code) await usePromoCode(code);
+    });
+}
+
+// Табы
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        document.getElementById('tabGames').style.display = tabName === 'games' ? 'block' : 'none';
+        document.getElementById('tabBank').style.display = tabName === 'bank' ? 'block' : 'none';
+        document.getElementById('tabNFT').style.display = tabName === 'nft' ? 'block' : 'none';
+        document.getElementById('tabProfile').style.display = tabName === 'profile' ? 'block' : 'none';
+    });
+});
+
+// Ставки
+document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentBet = parseInt(chip.dataset.bet);
+    });
+});
+
+// Аутентификация
+let isRegisterMode = false;
+
+document.getElementById('showRegisterBtn').addEventListener('click', () => {
+    isRegisterMode = !isRegisterMode;
+    const usernameField = document.getElementById('username');
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('showRegisterBtn');
+    
+    if (isRegisterMode) {
+        usernameField.style.display = 'block';
+        loginBtn.innerText = 'Зарегистрироваться';
+        registerBtn.innerText = 'Назад ко входу';
+    } else {
+        usernameField.style.display = 'none';
+        loginBtn.innerText = 'Войти';
+        registerBtn.innerText = 'Регистрация';
+    }
+});
+
+document.getElementById('authForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showLoading();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const username = document.getElementById('username').value;
+    
+    try {
+        if (isRegisterMode) {
+            const { data, error } = await supabase.auth.signUp({
+                email, password,
+                options: { data: { username: username || 'PepeLover', balance: 10000, card_balance: 0, games_played: 0, wins: 0, status: 'pepe_novice', credit_score: 500 } }
+            });
+            if (error) throw error;
+            showToast('✅ Регистрация успешна! Войдите, друг Pepe 🐸');
+            isRegisterMode = false;
+            document.getElementById('username').style.display = 'none';
+            document.getElementById('loginBtn').innerText = 'Войти';
+            document.getElementById('showRegisterBtn').innerText = 'Регистрация';
+        } else {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            
+            let { data: userData } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+            
+            if (!userData) {
+                const { data: newUser } = await supabase
+                    .from('users')
+                    .insert({
+                        id: data.user.id,
+                        username: data.user.user_metadata?.username || email.split('@')[0],
+                        balance: 10000,
+                        card_balance: 0,
+                        games_played: 0,
+                        wins: 0,
+                        status: 'pepe_novice',
+                        credit_score: 500
+                    })
+                    .select()
+                    .single();
+                userData = newUser;
+            }
+            
+            currentUser = userData;
+            currentUser.id = data.user.id;
+            
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            await initTables();
+            await updateUI();
+            await loadUserNFTs();
+        }
+    } catch (error) {
+        showToast('❌ Ошибка: ' + error.message);
+    }
+    hideLoading();
+});
+
+async function logout() {
+    await supabase.auth.signOut();
+    currentUser = null;
+    document.getElementById('authScreen').style.display = 'block';
+    document.getElementById('mainScreen').style.display = 'none';
+}
+
+// Проверка сессии при загрузке
+async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        let { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+        
+        if (!userData) {
+            const { data: newUser } = await supabase
+                .from('users')
+                .insert({
+                    id: session.user.id,
+                    username: session.user.user_metadata?.username || 'PepeLover',
+                    balance: 10000,
+                    card_balance: 0,
+                    games_played: 0,
+                    wins: 0,
+                    status: 'pepe_novice',
+                    credit_score: 500
+                })
+                .select()
+                .single();
+            userData = newUser;
+        }
+        
+        currentUser = userData;
+        currentUser.id = session.user.id;
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('mainScreen').style.display = 'block';
+        await initTables();
+        await updateUI();
+        await loadUserNFTs();
+    }
+    hideLoading();
+}
+
+// Инициализация
+checkSession();
+</script>
+</body>
+</html>
